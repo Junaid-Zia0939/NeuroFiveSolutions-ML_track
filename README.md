@@ -128,3 +128,67 @@ Why Did the Tuned Model Underperform the Baseline?
   is selected as the final production model for this task, as it retains higher 
   overall Accuracy (73.72%), Macro F1-Score (73.69%), and Class 1 Recall (70.59%).
 ================================================================================
+
+Week 3 --- Task 6
+
+
+
+## Week 3 Task 2: Executive Summary & Technical Overview
+
+**To:** Project Manager / Stakeholders  
+**From:** Machine Learning Engineering Team  
+**Subject:** Telco Customer Churn Prediction & Feature Importance Analysis  
+
+---
+
+### Executive Overview
+
+This task focused on building an end-to-end Machine Learning pipeline to identify customers at high risk of churning from the telecom service. By predicting churn early, the retention team can proactively target at-risk customers with targeted offers and personalized incentives.
+
+---
+
+### Pipeline & Methodology
+
+1. **Data Cleaning & Exploration:**
+   * Handled structural non-null issues (converted whitespace strings in `TotalCharges` to numeric values and imputed missing values using the column median).
+   * Removed non-predictive identifiers (`customerID`).
+   * Evaluated column data types, distributions, and summary statistics.
+
+2. **Feature Engineering & Preprocessing:**
+   * Encoded categorical attributes into numerical formats using One-Hot Encoding (`pd.get_dummies`).
+   * Scaled numerical features via `StandardScaler` to ensure optimal performance for distance and gradient-based estimators (Logistic Regression).
+
+3. **Handling Class Imbalance:**
+   * The initial dataset exhibited significant class imbalance (~73.5% non-churn vs. ~26.5% churn).
+   * Applied **Random Undersampling** on the training split to equalize the majority and minority class proportions, preventing the models from biasing toward non-churn predictions.
+
+---
+
+### Model Evaluation & Comparison
+
+We evaluated two baseline classifiers on the balanced test environment: **Logistic Regression** and **Decision Tree Classifier**.
+
+| Model | Overall Accuracy | Churn Precision | Churn Recall | F1-Score (Churn) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Logistic Regression** | **74.2%** | **0.51** | **0.79** | **0.62** |
+| **Decision Tree** | 69.3% | 0.45 | 0.68 | 0.54 |
+
+* **Key Takeaway:** Logistic Regression demonstrated superior overall performance, achieving a high **recall of 79%** on the Churn class. In churn prediction, prioritizing recall ensures that the business captures the highest possible number of actual churners.
+
+---
+
+### Key Business Insights (Feature Importance Analysis)
+
+Using the `.feature_importances_` attribute from our Decision Tree model, we identified the top 3 drivers influencing customer turnover:
+
+1. **Contract Type (Month-to-Month):** Customers on month-to-month contracts exhibit significantly higher churn rates compared to those on long-term 1- or 2-year contracts.
+2. **Tenure:** Shorter customer tenure strongly correlates with higher churn probability, indicating that early onboarding experience is critical.
+3. **Total / Monthly Charges:** Pricing structure directly influences retention; higher recurring monthly charges increase customer sensitivity to churn.
+
+---
+
+### Recommendations for Next Steps
+
+* **Retention Strategy:** Focus retention campaigns on customers on Month-to-Month contracts within their first 6–12 months of service.
+* **Pricing & Incentives:** Offer discounted long-term contract conversions or bundled incentives for high-MonthlyCharges tiers.
+* **Model Enhancement:** Proceed with hyperparameter tuning and explore ensemble methods (e.g., Random Forest, XGBoost) to improve precision while maintaining high recall.

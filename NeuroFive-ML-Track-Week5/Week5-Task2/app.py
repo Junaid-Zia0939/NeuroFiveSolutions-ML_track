@@ -71,3 +71,17 @@ if submit_button:
         st.error(f"### ⚠️ Prediction: Did Not Survive (0)")
         
     st.info(f"**Model Confidence:** {confidence:.2%}")
+    import os
+import streamlit as st
+import pandas as pd
+import joblib
+
+# Dynamically construct the path to the folder containing this app.py file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, 'titanic_pipeline.joblib')
+
+@st.cache_resource
+def load_pipeline():
+    return joblib.load(MODEL_PATH)
+
+pipeline = load_pipeline()

@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import pandas as pd
 import joblib
@@ -9,9 +10,9 @@ st.set_page_config(
     layout="centered"
 )
 
-# App Title & Description
-st.title("🚢 Titanic Survival Prediction App")
-st.markdown("Enter passenger details to predict their survival probability using the trained ML pipeline.")
+# Dynamically construct the path to the folder containing this app.py file
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "titanic_pipeline.joblib")
 
 # Load the saved joblib pipeline
 @st.cache_resource
@@ -19,6 +20,10 @@ def load_pipeline():
     return joblib.load(MODEL_PATH)
 
 pipeline = load_pipeline()
+
+# App Title & Description
+st.title("🚢 Titanic Survival Prediction App")
+st.markdown("Enter passenger details to predict their survival probability using the trained ML pipeline.")
 
 # User Input Form
 with st.form("passenger_form"):
@@ -30,7 +35,11 @@ with st.form("passenger_form"):
         pclass = st.selectbox("Passenger Class (Pclass)", options=[1, 2, 3], index=2)
         sex = st.selectbox("Sex", options=["male", "female"])
         age = st.number_input("Age", min_value=0.42, max_value=80.0, value=22.0, step=1.0)
-        embarked = st.selectbox("Port of Embarkation", options=["S", "C", "Q"], format_func=lambda x: {"S": "Southampton (S)", "C": "Cherbourg (C)", "Q": "Queenstown (Q)"}[x])
+        embarked = st.selectbox(
+            "Port of Embarkation",
+            options=["S", "C", "Q"],
+            format_func=lambda x: {"S": "Southampton (S)", "C": "Cherbourg (C)", "Q": "Queenstown (Q)"}[x]
+        )
         
     with col2:
         fare = st.number_input("Fare Paid ($)", min_value=0.0, max_value=512.33, value=7.25, step=1.0)
@@ -66,22 +75,8 @@ if submit_button:
     # 4. Show Output
     st.divider()
     if prediction == 1:
-        st.success(f"### 🎉 Prediction: Survived (1)")
+        st.success("### 🎉 Prediction: Survived (1)")
     else:
-        st.error(f"### ⚠️ Prediction: Did Not Survive (0)")
+        st.error("### ⚠️ Prediction: Did Not Survive (0)")
         
     st.info(f"**Model Confidence:** {confidence:.2%}")
-    import os
-import streamlit as st
-import pandas as pd
-import joblib
-
-# Dynamically construct the path to the folder containing this app.py file
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, 'titanic_pipeline.joblib')
-
-@st.cache_resource
-def load_pipeline():
-    return joblib.load(MODEL_PATH)
-
-pipeline = load_pipeline()

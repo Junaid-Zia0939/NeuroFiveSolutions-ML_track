@@ -16,7 +16,7 @@ st.markdown("Enter passenger details to predict their survival probability using
 # Load the saved joblib pipeline
 @st.cache_resource
 def load_pipeline():
-    return joblib.load('titanic_pipeline.joblib')
+    return joblib.load(MODEL_PATH)
 
 pipeline = load_pipeline()
 

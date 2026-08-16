@@ -1,7 +1,11 @@
-import os
 import streamlit as st
 import pandas as pd
-import joblib
+import numpy as np
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.linear_model import LogisticRegression
 
 # Page configuration
 st.set_page_config(
@@ -10,16 +14,51 @@ st.set_page_config(
     layout="centered"
 )
 
-# Dynamically construct the path to the folder containing this app.py file
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "titanic_pipeline.joblib")
-
-# Load the saved joblib pipeline
+# Train and cache the end-to-end pipeline directly (Zero serialization issues)
 @st.cache_resource
-def load_pipeline():
-    return joblib.load(MODEL_PATH)
+def get_trained_pipeline():
+    url = "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
+    df = pd.read_csv(url)
+    
+    # Feature Engineering
+    df['FamilySize'] = df['SibSp'] + df['Parch'] + 1
+    df['IsAlone'] = (df['FamilySize'] == 1).astype(int)
+    
+    features = ['Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked', 'FamilySize', 'IsAlone']
+    target = 'Survived'
+    
+    X = df[features]
+    y = df[target]
+    
+    num_cols = ['Age', 'Fare', 'SibSp', 'Parch', 'FamilySize']
+    cat_cols = ['Sex', 'Embarked', 'Pclass', 'IsAlone']
+    
+    num_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='median')),
+        ('scaler', StandardScaler())
+    ])
+    
+    cat_transformer = Pipeline(steps=[
+        ('imputer', SimpleImputer(strategy='most_frequent')),
+        ('encoder', OneHotEncoder(handle_unknown='ignore', sparse_output=False))
+    ])
+    
+    preprocessor = ColumnTransformer(
+        transformers=[
+            ('num', num_transformer, num_cols),
+            ('cat', cat_transformer, cat_cols)
+        ]
+    )
+    
+    pipeline = Pipeline(steps=[
+        ('preprocessor', preprocessor),
+        ('classifier', LogisticRegression(random_state=42, max_iter=1000))
+    ])
+    
+    pipeline.fit(X, y)
+    return pipeline
 
-pipeline = load_pipeline()
+pipeline = get_trained_pipeline()
 
 # App Title & Description
 st.title("🚢 Titanic Survival Prediction App")
@@ -50,11 +89,9 @@ with st.form("passenger_form"):
 
 # Inference & Result Display
 if submit_button:
-    # 1. Feature Engineering
     family_size = sibsp + parch + 1
     is_alone = 1 if family_size == 1 else 0
     
-    # 2. Match exact DataFrame schema expected by the pipeline
     raw_sample = pd.DataFrame([{
         'Pclass': pclass,
         'Sex': sex,
@@ -67,12 +104,10 @@ if submit_button:
         'IsAlone': is_alone
     }])
     
-    # 3. Predict directly using the loaded pipeline
     prediction = pipeline.predict(raw_sample)[0]
     probabilities = pipeline.predict_proba(raw_sample)[0]
     confidence = probabilities[prediction]
     
-    # 4. Show Output
     st.divider()
     if prediction == 1:
         st.success("### 🎉 Prediction: Survived (1)")

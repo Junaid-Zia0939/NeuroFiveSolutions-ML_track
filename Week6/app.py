@@ -9,15 +9,28 @@ st.set_page_config(
     layout="wide"
 )
 
-# 1. Load both saved pipelines
+import os
+from pathlib import Path
+import joblib
+import streamlit as st
+
+# 1. Get the exact folder directory where app.py lives
+CURRENT_DIR = Path(__file__).parent.resolve()
+
 @st.cache_resource
 def load_models():
-    reg_model = joblib.load("av_time_pipeline.joblib")
-    clf_model = joblib.load("av_action_classifier.joblib")
+    reg_path = CURRENT_DIR / "av_time_pipeline.joblib"
+    clf_path = CURRENT_DIR / "av_action_classifier.joblib"
+    
+    # Optional debug check
+    if not reg_path.exists():
+        raise FileNotFoundError(f"Missing model file at: {reg_path}")
+        
+    reg_model = joblib.load(reg_path)
+    clf_model = joblib.load(clf_path)
     return reg_model, clf_model
 
 time_pipeline, action_pipeline = load_models()
-
 st.title("🚗 Autonomous Vehicle Collision Avoidance System")
 st.markdown("Real-time perception analysis, stopping horizon calculation, and evasive action recommendation.")
 st.divider()
